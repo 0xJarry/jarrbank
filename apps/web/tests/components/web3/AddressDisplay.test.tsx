@@ -146,7 +146,7 @@ describe('AddressDisplay', () => {
       // Wait for the copy confirmation to appear
       await waitFor(() => {
         expect(screen.getByText('Address copied to clipboard!')).toBeInTheDocument()
-      })
+      }, { timeout: 1000 })
 
       // Fast forward timers to test auto-hide
       vi.advanceTimersByTime(2000)
@@ -154,7 +154,7 @@ describe('AddressDisplay', () => {
       // Confirmation should disappear after timeout
       await waitFor(() => {
         expect(screen.queryByText('Address copied to clipboard!')).not.toBeInTheDocument()
-      })
+      }, { timeout: 1000 })
     })
 
     it('shows full address in details section', () => {
@@ -187,7 +187,9 @@ describe('AddressDisplay', () => {
       fireEvent.click(copyButton)
       
       // Allow some time for the async clipboard operation to fail
-      await new Promise(resolve => setTimeout(resolve, 10))
+      await waitFor(() => {
+        expect(mockWriteText).toHaveBeenCalledWith(mockAddress)
+      }, { timeout: 1000 })
       
       // Should not show copied message when clipboard fails
       expect(screen.queryByText('Address copied to clipboard!')).not.toBeInTheDocument()

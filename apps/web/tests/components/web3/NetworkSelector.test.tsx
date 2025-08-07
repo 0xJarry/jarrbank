@@ -123,8 +123,8 @@ describe('NetworkSelector', () => {
 
       render(<NetworkSelector />)
       
-      expect(screen.getByText('Network switch failed')).toBeInTheDocument()
-      expect(screen.getByText('Network switch failed')).toBeInTheDocument()
+      // Check that error message appears (there are multiple instances with title and description)
+      expect(screen.getAllByText('Network switch failed')).toHaveLength(2)
     })
 
     it('shows unsupported network warning', () => {

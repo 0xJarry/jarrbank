@@ -5,12 +5,19 @@ import Home from '../../app/page'
 import * as wagmi from 'wagmi'
 
 // Mock wagmi hooks
-vi.mock('wagmi', () => ({
-  useAccount: vi.fn(),
-  useChainId: vi.fn(),
-  createConfig: vi.fn(),
-  WagmiProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}))
+vi.mock('wagmi', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    useAccount: vi.fn(),
+    useChainId: vi.fn(),
+    useConnect: vi.fn(),
+    useDisconnect: vi.fn(),
+    useSwitchChain: vi.fn(),
+    useEnsName: vi.fn(),
+    WagmiProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  }
+})
 
 // Mock TanStack React Query
 vi.mock('@tanstack/react-query', () => ({
