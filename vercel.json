@@ -1,8 +1,7 @@
 {
   "version": 2,
   "buildCommand": "npx turbo run build --filter=@jarrbank/web",
-  "outputDirectory": "apps/web/.next",
-  "rootDirectory": "./",
+  "outputDirectory": "apps/web",
   "installCommand": "npm install",
   "framework": "nextjs",
   "functions": {
