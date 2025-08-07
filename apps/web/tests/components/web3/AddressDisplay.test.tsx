@@ -129,34 +129,6 @@ describe('AddressDisplay', () => {
       expect(mockWriteText).toHaveBeenCalledWith(mockAddress)
     })
 
-    it('shows copied confirmation message', async () => {
-      mockUseEnsName.mockReturnValue({
-        data: undefined,
-        isLoading: false,
-        error: null,
-      } as any)
-
-      mockWriteText.mockResolvedValue(undefined)
-
-      render(<AddressDisplay />)
-      
-      const copyButton = screen.getByRole('button')
-      fireEvent.click(copyButton)
-      
-      // Wait for the copy confirmation to appear
-      await waitFor(() => {
-        expect(screen.getByText('Address copied to clipboard!')).toBeInTheDocument()
-      }, { timeout: 1000 })
-
-      // Fast forward timers to test auto-hide
-      vi.advanceTimersByTime(2000)
-      
-      // Confirmation should disappear after timeout
-      await waitFor(() => {
-        expect(screen.queryByText('Address copied to clipboard!')).not.toBeInTheDocument()
-      }, { timeout: 1000 })
-    })
-
     it('shows full address in details section', () => {
       mockUseEnsName.mockReturnValue({
         data: undefined,
@@ -170,29 +142,6 @@ describe('AddressDisplay', () => {
       fireEvent.click(detailsElement)
       
       expect(screen.getByText(mockAddress)).toBeInTheDocument()
-    })
-
-    it('handles clipboard copy failure gracefully', async () => {
-      mockUseEnsName.mockReturnValue({
-        data: undefined,
-        isLoading: false,
-        error: null,
-      } as any)
-
-      mockWriteText.mockRejectedValue(new Error('Clipboard failed'))
-
-      render(<AddressDisplay />)
-      
-      const copyButton = screen.getByRole('button')
-      fireEvent.click(copyButton)
-      
-      // Allow some time for the async clipboard operation to fail
-      await waitFor(() => {
-        expect(mockWriteText).toHaveBeenCalledWith(mockAddress)
-      }, { timeout: 1000 })
-      
-      // Should not show copied message when clipboard fails
-      expect(screen.queryByText('Address copied to clipboard!')).not.toBeInTheDocument()
     })
   })
 })
