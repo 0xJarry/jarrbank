@@ -1,0 +1,11 @@
+node_modules
+.turbo
+.git
+.env*
+docs/
+.bmad-core/
+.claude/
+.cursor/
+packages/config/node_modules
+tools/
+*.log
