@@ -1,41 +1,37 @@
+'use client'
+
+import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import { PortfolioOverview } from "@/components/portfolio/PortfolioOverview"
+import { WalletConnection } from "@/components/web3/WalletConnection"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 
 export default function Home() {
   return (
-    <main className="container mx-auto py-12">
-      <div className="flex flex-col items-center space-y-8">
+    <DashboardLayout>
+      <div className="space-y-6">
         <div className="text-center space-y-4">
-          <h1 className="text-6xl font-bold">
-            Hello There{' '}
+          <h1 className="text-4xl font-bold">
+            Welcome to{' '}
             <span className="bg-gradient-to-r from-blue-600 via-green-500 to-indigo-400 bg-clip-text text-transparent">
               JarrBank
             </span>
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Professional multi-chain DeFi portfolio management platform
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 w-full max-w-6xl">
-          <Card className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                Portfolio
-                <span className="text-primary">→</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <CardDescription>
-                Multi-chain DeFi portfolio tracking and management
-              </CardDescription>
-            </CardContent>
-          </Card>
+        <div className="flex justify-center mb-6">
+          <WalletConnection />
+        </div>
 
+        <PortfolioOverview />
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                Analytics
+                Portfolio Analytics
                 <span className="text-primary">→</span>
               </CardTitle>
             </CardHeader>
@@ -63,23 +59,32 @@ export default function Home() {
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                Automation
+                Multi-Chain
                 <span className="text-primary">→</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
               <CardDescription>
-                Cross-LP compounding workflows and automation
+                Track assets across Ethereum, Arbitrum, and Avalanche
+              </CardDescription>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                Real-time Data
+                <span className="text-primary">→</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>
+                Live portfolio updates and price tracking
               </CardDescription>
             </CardContent>
           </Card>
         </div>
-
-        <div className="flex gap-4">
-          <Button size="lg">Get Started</Button>
-          <Button variant="outline" size="lg">Learn More</Button>
-        </div>
       </div>
-    </main>
+    </DashboardLayout>
   )
 }
