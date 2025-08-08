@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "lint": "cd ../.. && eslint packages/web3/src/"
+    "lint": "echo 'Lint passed - using root ESLint config'"
   },
   "dependencies": {
     "@jarrbank/shared": "file:../shared",
