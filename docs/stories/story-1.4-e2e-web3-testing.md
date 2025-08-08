@@ -1,0 +1,370 @@
+# Story 1.4: E2E Web3 Testing Framework with Synpress
+
+## Story Overview
+
+**Title**: Implement Comprehensive E2E Web3 Testing with Synpress  
+**Type**: Technical Implementation  
+**Priority**: High  
+**Estimated Effort**: 8-12 hours  
+**Dependencies**: Story 1.2 (Wallet Connection), Story 1.3 (Visual Testing)  
+
+### Executive Summary
+
+This story implements a robust end-to-end testing framework for Web3 interactions using Synpress, enabling automated testing of MetaMask wallet connections, transaction flows, and DeFi protocol interactions within the JarrBank platform.
+
+## Problem Statement
+
+### Current Challenges
+- Manual testing of wallet interactions is time-consuming and error-prone
+- No automated way to test multi-chain switching and transaction flows
+- Lack of regression testing for Web3-specific features
+- Difficulty in testing edge cases and error scenarios with real wallets
+
+### Impact
+- Increased bug risk in production wallet interactions
+- Slower development velocity due to manual testing requirements
+- Reduced confidence in deploying Web3 features
+- Inability to test complex DeFi interaction patterns
+
+## Solution Design
+
+### Technology Selection: Synpress
+
+**Why Synpress?**
+- Native MetaMask automation support
+- Playwright integration for modern testing capabilities
+- Browser state caching for test performance
+- Active maintenance and Web3-specific features
+- Monorepo-friendly architecture
+
+### Architecture Overview
+
+```
+jarrbank/
+├── packages/
+│   ├── e2e/                    # New E2E testing package
+│   │   ├── tests/              # Test specifications
+│   │   ├── fixtures/           # Synpress fixtures & setup
+│   │   ├── utils/              # Test helpers
+│   │   └── playwright.config.ts
+│   └── config/                 # Existing config package
+├── apps/
+│   └── web/                    # Main application
+└── turbo.json                  # Updated with e2e pipeline
+```
+
+## Implementation Plan
+
+### Phase 1: Infrastructure Setup (2-3 hours)
+
+#### 1.1 Package Creation
+- Create `packages/e2e` directory structure
+- Initialize package.json with Synpress dependencies
+- Configure TypeScript for e2e package
+
+#### 1.2 Environment Configuration
+- Set up `.env` file with test wallet configuration
+- Configure Windows-specific environment variables
+- Create PowerShell setup scripts for team onboarding
+
+#### 1.3 Playwright Integration
+- Install Playwright and Synpress packages
+- Configure playwright.config.ts with Synpress fixtures
+- Set up browser management and caching
+
+### Phase 2: Core Test Implementation (3-4 hours)
+
+#### 2.1 Wallet Connection Tests
+```typescript
+// Tests to implement:
+- Connect MetaMask wallet
+- Reject connection request
+- Disconnect wallet
+- Switch between multiple accounts
+- Handle locked wallet state
+```
+
+#### 2.2 Network Switching Tests
+```typescript
+// Tests to implement:
+- Switch between supported networks
+- Handle unsupported network requests
+- Add custom network
+- Verify network-specific UI updates
+```
+
+#### 2.3 Portfolio Display Tests
+```typescript
+// Tests to implement:
+- Display connected wallet portfolio
+- Update balances after network switch
+- Handle empty portfolio state
+- Verify multi-chain asset aggregation
+```
+
+### Phase 3: Advanced Testing Scenarios (2-3 hours)
+
+#### 3.1 Transaction Flow Tests
+- Transaction approval flows
+- Transaction rejection handling
+- Gas estimation verification
+- Transaction status tracking
+
+#### 3.2 DeFi Interaction Tests
+- Token approval patterns
+- Swap transaction flows
+- Liquidity provision tests
+- Cross-chain bridge tests
+
+### Phase 4: CI/CD Integration (1-2 hours)
+
+#### 4.1 Turbo Pipeline Configuration
+- Add e2e task to turbo.json
+- Configure environment variable passthrough
+- Set up test result caching
+
+#### 4.2 GitHub Actions Setup
+- Create e2e workflow file
+- Configure headless browser execution
+- Set up test result reporting
+
+## Technical Specifications
+
+### Dependencies
+
+```json
+{
+  "@synthetixio/synpress": "^3.7.3",
+  "@playwright/test": "^1.40.0",
+  "cross-env": "^7.0.3",
+  "dotenv": "^16.0.3"
+}
+```
+
+### Environment Variables
+
+```bash
+# Required for Synpress
+NETWORK_NAME=localhost           # Network to use (localhost/mainnet/goerli)
+SECRET_WORDS=<mnemonic>         # Test wallet seed phrase
+HEADLESS=false                   # Browser visibility
+METAMASK_VERSION=latest          # MetaMask extension version
+
+# Optional
+ETHERSCAN_KEY=<api_key>         # For Etherscan integration
+PRIVATE_KEY=<private_key>       # Alternative to seed phrase
+```
+
+### Test Structure
+
+```typescript
+// Base test configuration
+import { testWithSynpress } from '@synthetixio/synpress';
+import { metaMaskFixtures } from '@synthetixio/synpress/playwright';
+
+const test = testWithSynpress(metaMaskFixtures(basicSetup));
+
+// Test organization
+describe('Feature Area', () => {
+  beforeEach(async ({ page }) => {
+    await page.goto('/');
+  });
+
+  test('specific scenario', async ({ page, metaMask }) => {
+    // Test implementation
+  });
+});
+```
+
+## Success Criteria
+
+### Functional Requirements
+- [ ] All wallet connection flows are automated
+- [ ] Network switching is fully tested
+- [ ] Portfolio display tests pass consistently
+- [ ] Transaction flows are validated
+- [ ] Tests run in both headed and headless modes
+
+### Non-Functional Requirements
+- [ ] Tests complete within 5 minutes
+- [ ] 95%+ test reliability (no flaky tests)
+- [ ] Clear test reporting and debugging
+- [ ] Documentation for test maintenance
+- [ ] CI/CD pipeline integration
+
+### Performance Metrics
+- Test execution time: < 5 minutes for full suite
+- Parallel execution: Support for 2+ workers
+- Browser caching: 50%+ speed improvement on subsequent runs
+- CI stability: < 2% failure rate from infrastructure issues
+
+## Risk Assessment
+
+### Technical Risks
+
+| Risk | Impact | Probability | Mitigation |
+|------|--------|-------------|------------|
+| MetaMask updates breaking tests | High | Medium | Pin MetaMask version, monitor updates |
+| Windows-specific issues | Medium | Low | PowerShell scripts, cross-platform testing |
+| Test flakiness | High | Medium | Retry logic, stable selectors, proper waits |
+| CI/CD complexity | Low | Low | Incremental rollout, fallback to manual |
+
+### Mitigation Strategies
+1. **Version Pinning**: Lock MetaMask and Synpress versions
+2. **Graceful Degradation**: Manual test fallback procedures
+3. **Progressive Rollout**: Start with critical paths only
+4. **Team Training**: Documentation and pairing sessions
+
+## Implementation Checklist
+
+### Pre-Implementation
+- [ ] Review current test coverage gaps
+- [ ] Validate Synpress compatibility with tech stack
+- [ ] Set up test wallet and network configuration
+- [ ] Prepare team for new testing approach
+
+### During Implementation
+- [ ] Create e2e package structure
+- [ ] Install and configure Synpress
+- [ ] Implement core wallet tests
+- [ ] Add network switching tests
+- [ ] Create portfolio integration tests
+- [ ] Set up CI/CD pipeline
+- [ ] Document test patterns
+
+### Post-Implementation
+- [ ] Run full test suite validation
+- [ ] Measure test execution metrics
+- [ ] Document maintenance procedures
+- [ ] Team training session
+- [ ] Create test writing guidelines
+
+## Rollout Strategy
+
+### Week 1: Foundation
+- Day 1-2: Package setup and configuration
+- Day 3-4: Core wallet connection tests
+- Day 5: Initial CI/CD integration
+
+### Week 2: Expansion
+- Day 1-2: Network and portfolio tests
+- Day 3-4: Transaction flow tests
+- Day 5: Documentation and training
+
+### Week 3: Optimization
+- Day 1-2: Performance tuning
+- Day 3-4: Parallel execution setup
+- Day 5: Full rollout and monitoring
+
+## Long-term Maintenance
+
+### Quarterly Tasks
+- Update Synpress and MetaMask versions
+- Review and refactor test patterns
+- Performance optimization review
+- Test coverage assessment
+
+### Monthly Tasks
+- Monitor test reliability metrics
+- Update test data and fixtures
+- Review CI/CD pipeline efficiency
+- Team sync on test improvements
+
+### Weekly Tasks
+- Review failed test reports
+- Update tests for new features
+- Maintain test documentation
+- Address flaky test issues
+
+## Success Metrics
+
+### KPIs to Track
+1. **Test Coverage**: % of Web3 features with E2E tests
+2. **Execution Time**: Average test suite runtime
+3. **Reliability**: Test pass rate over time
+4. **Bug Detection**: Bugs caught by E2E tests before production
+5. **Developer Velocity**: Time saved on manual testing
+
+### Target Metrics (3 months)
+- Test Coverage: > 80% of Web3 features
+- Execution Time: < 5 minutes
+- Reliability: > 95% pass rate
+- Bug Detection: 50% reduction in production Web3 bugs
+- Developer Velocity: 4 hours/week saved
+
+## Documentation Requirements
+
+### Developer Guide
+- Setup instructions for Windows/Mac/Linux
+- Test writing best practices
+- Debugging guide for failed tests
+- Synpress API reference
+
+### Test Patterns Catalog
+- Common Web3 testing scenarios
+- Reusable test utilities
+- Mock data management
+- Error handling patterns
+
+## Conclusion
+
+This implementation provides JarrBank with a comprehensive E2E testing framework specifically designed for Web3 applications. By leveraging Synpress with Playwright, we achieve automated testing of complex wallet interactions while maintaining the flexibility to expand test coverage as the platform grows.
+
+The phased approach ensures minimal disruption to current development while progressively building confidence in our Web3 features through automated testing.
+
+## Appendix
+
+### A. Command Reference
+
+```bash
+# Setup commands
+npm run setup:e2e              # Initial setup
+npm run test:e2e               # Run all E2E tests
+npm run test:e2e:debug         # Debug mode
+npm run test:e2e:headed        # Headed mode
+
+# Development commands
+npm run dev                    # Start dev server
+npm run test:e2e:watch        # Watch mode
+```
+
+### B. File Structure Template
+
+```
+packages/e2e/
+├── package.json
+├── playwright.config.ts
+├── synpress.config.ts
+├── .env.example
+├── tests/
+│   ├── wallet/
+│   │   ├── connection.spec.ts
+│   │   ├── switching.spec.ts
+│   │   └── transactions.spec.ts
+│   ├── portfolio/
+│   │   ├── overview.spec.ts
+│   │   └── assets.spec.ts
+│   └── defi/
+│       ├── swaps.spec.ts
+│       └── liquidity.spec.ts
+├── fixtures/
+│   ├── metamask-setup.ts
+│   └── test-accounts.ts
+└── utils/
+    ├── test-helpers.ts
+    └── mock-data.ts
+```
+
+### C. Resources
+
+- [Synpress Documentation](https://docs.synpress.io)
+- [Playwright Documentation](https://playwright.dev)
+- [MetaMask Test DApp](https://metamask.github.io/test-dapp/)
+- [Web3 Testing Best Practices](https://ethereum.org/en/developers/docs/testing/)
+
+---
+
+**Document Version**: 1.0.0  
+**Last Updated**: January 2025  
+**Author**: Winston (JarrBank Architecture Team)  
+**Status**: Ready for Implementation
