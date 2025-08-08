@@ -6,7 +6,11 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Loader2, Wallet, CheckCircle, AlertCircle, LogOut } from 'lucide-react'
 
-export function WalletConnection() {
+interface WalletConnectionProps {
+  showCard?: boolean
+}
+
+export function WalletConnection({ showCard = true }: WalletConnectionProps) {
   const { address, isConnected, isConnecting } = useAccount()
   const { connect, connectors, error, isPending } = useConnect()
   const { disconnect } = useDisconnect()
@@ -72,18 +76,31 @@ export function WalletConnection() {
     )
   }
 
-  return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <Wallet className="h-5 w-5" />
-          <CardTitle className="text-lg">Connect Your Wallet</CardTitle>
+  const content = (
+    <>
+      {showCard && (
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Wallet className="h-5 w-5" />
+            <CardTitle className="text-lg">Connect Your Wallet</CardTitle>
+          </div>
+          <CardDescription>
+            Choose a wallet to connect to JarrBank
+          </CardDescription>
+        </CardHeader>
+      )}
+      {!showCard && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <Wallet className="h-5 w-5" />
+            <h3 className="text-lg font-semibold">Connect Your Wallet</h3>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Choose a wallet to connect to JarrBank
+          </p>
         </div>
-        <CardDescription>
-          Choose a wallet to connect to JarrBank
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
+      )}
+      <div className="space-y-3">
         {connectors.map((connector) => (
           <Button
             key={connector.uid}
@@ -112,6 +129,18 @@ export function WalletConnection() {
             <p className="text-sm">Connecting to wallet...</p>
           </div>
         )}
+      </div>
+    </>
+  )
+
+  if (!showCard) {
+    return content
+  }
+
+  return (
+    <Card className="w-full max-w-md">
+      <CardContent className="space-y-3 pt-6">
+        {content}
       </CardContent>
     </Card>
   )

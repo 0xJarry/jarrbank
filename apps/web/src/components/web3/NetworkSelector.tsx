@@ -2,8 +2,14 @@
 
 import { useAccount, useChainId, useSwitchChain } from 'wagmi'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, Network, CheckCircle, AlertTriangle } from 'lucide-react'
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator,
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu'
+import { Loader2, Network, CheckCircle, AlertTriangle, ChevronDown } from 'lucide-react'
 import { supportedChains } from '@/lib/wagmi'
 import { useState } from 'react'
 
@@ -29,83 +35,79 @@ export function NetworkSelector() {
   }
 
   if (!isConnected) {
-    return (
-      <Card className="w-full max-w-md opacity-50">
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <Network className="h-5 w-5" />
-            <CardTitle className="text-lg">Network</CardTitle>
-          </div>
-          <CardDescription>
-            Connect your wallet to select a network
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    )
+    return null
   }
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <Network className="h-5 w-5" />
-          <CardTitle className="text-lg">Select Network</CardTitle>
-        </div>
-        <CardDescription>
-          Switch between supported blockchain networks
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button 
+          variant="outline" 
+          size="sm"
+          className="flex items-center gap-2"
+          disabled={isPending}
+        >
+          <Network className="h-4 w-4" />
+          <span className="text-sm">
+            {currentChain?.name || 'Unknown Network'}
+          </span>
+          {isPending ? (
+            <Loader2 className="h-3 w-3 animate-spin" />
+          ) : (
+            <ChevronDown className="h-3 w-3" />
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      
+      <DropdownMenuContent align="end" className="min-w-[200px]">
         {!isSupported && (
-          <div className="flex items-center gap-2 p-3 bg-yellow-50 text-yellow-800 rounded-md">
-            <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-            <p className="text-sm">Current network is not supported. Please switch to a supported network.</p>
-          </div>
-        )}
-
-        <div className="space-y-2">
-          {supportedChains.map((chain) => {
-            const isActive = chain.id === chainId
-            const isLoading = isPending && pendingChainId === chain.id
-            
-            return (
-              <Button
-                key={chain.id}
-                onClick={() => handleSwitchChain(chain.id)}
-                disabled={isActive || isPending}
-                variant={isActive ? "default" : "outline"}
-                className="w-full justify-between"
-              >
-                <div className="flex items-center gap-2">
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : isActive ? (
-                    <CheckCircle className="h-4 w-4" />
-                  ) : (
-                    <div className="h-4 w-4" />
-                  )}
-                  <span>{chain.name}</span>
-                </div>
-                {isActive && (
-                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                    Active
-                  </span>
-                )}
-              </Button>
-            )
-          })}
-        </div>
-
-        {error && (
-          <div className="flex items-center gap-2 p-3 bg-destructive/10 text-destructive rounded-md">
-            <AlertTriangle className="h-4 w-4 flex-shrink-0" />
-            <div>
-              <p className="text-sm font-medium">Network switch failed</p>
-              <p className="text-xs">{error.message}</p>
+          <>
+            <div className="flex items-center gap-2 p-2 text-yellow-600">
+              <AlertTriangle className="h-4 w-4" />
+              <span className="text-xs">Unsupported network</span>
             </div>
-          </div>
+            <DropdownMenuSeparator />
+          </>
         )}
-      </CardContent>
-    </Card>
+        
+        {supportedChains.map((chain) => {
+          const isActive = chain.id === chainId
+          const isLoading = isPending && pendingChainId === chain.id
+          
+          return (
+            <DropdownMenuItem
+              key={chain.id}
+              onClick={() => handleSwitchChain(chain.id)}
+              disabled={isActive || isPending}
+              className="flex items-center justify-between cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : isActive ? (
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                ) : (
+                  <div className="h-4 w-4" />
+                )}
+                <span>{chain.name}</span>
+              </div>
+              {isActive && (
+                <span className="text-xs text-muted-foreground">Active</span>
+              )}
+            </DropdownMenuItem>
+          )
+        })}
+        
+        {error && (
+          <>
+            <DropdownMenuSeparator />
+            <div className="flex items-center gap-2 p-2 text-destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <span className="text-xs">{error.message}</span>
+            </div>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

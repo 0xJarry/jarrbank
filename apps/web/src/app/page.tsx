@@ -2,7 +2,6 @@
 
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { PortfolioOverview } from "@/components/portfolio/PortfolioOverview"
-import { WalletConnection } from "@/components/web3/WalletConnection"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function Home() {
@@ -19,10 +18,6 @@ export default function Home() {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Professional multi-chain DeFi portfolio management platform
           </p>
-        </div>
-
-        <div className="flex justify-center mb-6">
-          <WalletConnection />
         </div>
 
         <PortfolioOverview />
