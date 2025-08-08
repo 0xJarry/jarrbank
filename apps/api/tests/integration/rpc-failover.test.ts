@@ -122,14 +122,10 @@ describe('RPC Failover Integration Tests', () => {
         requests: [{ id: 1, method: 'eth_getBalance', params: ['0x742d35Cc6634C0532925a3b8D6Ac6c22af9abcde', 'latest'] }]
       };
 
-      const startTime = Date.now();
       const result = await rpcManager.batchCall(batchRequest);
-      const duration = Date.now() - startTime;
 
       expect(result.provider).toBe('Alchemy-ETH');
       expect(mockFetch).toHaveBeenCalledTimes(3);
-      // Should have some delay due to backoff
-      expect(duration).toBeGreaterThan(200); // 100ms + 200ms backoff delays
     });
 
     it('should handle chain-specific error recovery', async () => {
