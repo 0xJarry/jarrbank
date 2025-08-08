@@ -3,8 +3,20 @@ name: CI
 on:
   push:
     branches: [main, master, develop]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '.bmad-core/**'
+      - 'LICENSE'
+      - '.gitignore'
   pull_request:
     branches: [main, master, develop]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '.bmad-core/**'
+      - 'LICENSE'
+      - '.gitignore'
 
 jobs:
   lint-and-typecheck:

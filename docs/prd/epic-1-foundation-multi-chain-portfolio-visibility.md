@@ -28,7 +28,37 @@ so that I can verify the wallet connection works and preview the portfolio inter
 5. Mock portfolio data display (sample tokens and LP positions) when wallet connected
 6. Basic dashboard layout showing mock data with proper UI components
 
-## Story 1.3: Multi-Chain RPC Infrastructure with Health Check
+## Story 1.3: Visual UI Feedback System with Playwright MCP (COMPLETED)
+As a QA engineer,
+I want to implement a visual feedback system using Playwright MCP,
+so that I can provide interactive UI testing and visual verification during development.
+
+### Acceptance Criteria
+1. Playwright MCP integration for browser automation
+2. Visual feedback system for UI element verification
+3. Interactive testing capabilities during development
+4. Screenshot and snapshot capabilities for visual regression
+5. Integration with existing testing infrastructure
+
+### Status
+**COMPLETED** - Implemented successfully with Playwright MCP integration
+
+## Story 1.4: E2E Web3 Testing Framework (ATTEMPTED - ARCHIVED)
+As a developer,
+I want to implement comprehensive E2E Web3 testing with Synpress,
+so that I can automate testing of MetaMask wallet connections and DeFi interactions.
+
+### Acceptance Criteria
+1. Synpress integration for MetaMask automation
+2. E2E tests for wallet connection flows
+3. Network switching test automation
+4. Transaction flow testing capabilities
+5. CI/CD pipeline integration for E2E tests
+
+### Status
+**ARCHIVED** - Initial Synpress-based implementation plan was created but the story was manually implemented using an alternative approach. See `docs/stories/1.4.e2e-web3-testing.md` for details.
+
+## Story 1.5: Multi-Chain RPC Infrastructure with Health Check
 As a developer,
 I want to implement efficient batched RPC calls with a working health check system,
 so that I can validate RPC connectivity and establish the data fetching foundation.
@@ -41,7 +71,7 @@ so that I can validate RPC connectivity and establish the data fetching foundati
 5. Chain-specific error handling and failover mechanisms
 6. Health check endpoint that tests RPC connectivity to all three chains
 
-## Story 1.4: Live Token Balance Integration
+## Story 1.6: Live Token Balance Integration
 As a DeFi user,
 I want to see my actual token balances across all chains replacing the mock data,
 so that I can view my real portfolio instead of sample data.
@@ -54,7 +84,7 @@ so that I can view my real portfolio instead of sample data.
 5. Portfolio total value calculation and chain-wise breakdown display
 6. Graceful fallback to "No tokens found" when wallet has no balances
 
-## Story 1.5: Live LP Position Integration
+## Story 1.7: Live LP Position Integration
 As a DeFi user,
 I want to see my actual liquidity provider positions replacing mock LP data,
 so that I can track my real LP investments alongside my token holdings.
@@ -67,7 +97,7 @@ so that I can track my real LP investments alongside my token holdings.
 5. Aggregated LP value integration into portfolio totals
 6. Support for detecting LP positions on all three target chains
 
-## Story 1.6: Portfolio Refresh and Error Handling
+## Story 1.8: Portfolio Refresh and Error Handling
 As a DeFi user,
 I want to refresh my portfolio data and see clear error messages when things fail,
 so that I can get updated information and understand any connectivity issues.
