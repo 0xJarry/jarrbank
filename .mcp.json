@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "type": "stdio", 
+      "command": "cmd",
+      "args": ["/c", "npx", "@playwright/mcp@latest"],
+      "env": {},
+      "description": "Playwright MCP server for visual UI testing and browser automation. Enables Claude to capture screenshots, analyze designs, and provide visual feedback on UI implementations."
+    }
+  }
+}
