@@ -30,9 +30,9 @@ export const config = createConfig({
     })
   ],
   transports: {
-    [mainnet.id]: http(),
-    [arbitrum.id]: http(),
-    [avalanche.id]: http()
+    [mainnet.id]: http(process.env.NEXT_PUBLIC_ALCHEMY_ETH_RPC_URL),
+    [arbitrum.id]: http(process.env.NEXT_PUBLIC_ALCHEMY_ARB_RPC_URL),
+    [avalanche.id]: http(process.env.NEXT_PUBLIC_ALCHEMY_AVAX_RPC_URL)
   },
 })
 
