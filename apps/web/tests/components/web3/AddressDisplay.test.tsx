@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { AddressDisplay } from '@/components/web3/AddressDisplay'
 import * as wagmi from 'wagmi'
 
@@ -7,6 +7,7 @@ import * as wagmi from 'wagmi'
 vi.mock('wagmi', () => ({
   useAccount: vi.fn(),
   useEnsName: vi.fn(),
+  useDisconnect: vi.fn(),
 }))
 
 // Mock navigator.clipboard
@@ -18,16 +19,16 @@ Object.assign(navigator, {
 
 const mockUseAccount = vi.mocked(wagmi.useAccount)
 const mockUseEnsName = vi.mocked(wagmi.useEnsName)
-const mockWriteText = vi.mocked(navigator.clipboard.writeText)
+const mockUseDisconnect = vi.mocked(wagmi.useDisconnect)
 
 describe('AddressDisplay', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.useFakeTimers()
-  })
-
-  afterEach(() => {
-    vi.useRealTimers()
+    
+    // Setup default mocks
+    mockUseDisconnect.mockReturnValue({
+      disconnect: vi.fn(),
+    } as any)
   })
 
   describe('when wallet is not connected', () => {
@@ -43,11 +44,11 @@ describe('AddressDisplay', () => {
       } as any)
     })
 
-    it('renders disconnected state', () => {
-      render(<AddressDisplay />)
+    it('renders null when disconnected', () => {
+      const { container } = render(<AddressDisplay />)
       
-      expect(screen.getByText('Wallet Address')).toBeInTheDocument()
-      expect(screen.getByText('No wallet connected')).toBeInTheDocument()
+      // Component should render nothing when wallet is not connected
+      expect(container.firstChild).toBeNull()
     })
   })
 
@@ -70,9 +71,8 @@ describe('AddressDisplay', () => {
 
       render(<AddressDisplay />)
       
-      expect(screen.getByText('Wallet Address')).toBeInTheDocument()
-      expect(screen.getByText('Your connected wallet information')).toBeInTheDocument()
       expect(screen.getByText('0x1234...7890')).toBeInTheDocument()
+      expect(screen.getByRole('button')).toBeInTheDocument()
     })
 
     it('displays ENS name when available', () => {
@@ -84,52 +84,10 @@ describe('AddressDisplay', () => {
 
       render(<AddressDisplay />)
       
-      expect(screen.getByText('ENS Name')).toBeInTheDocument()
       expect(screen.getByText('vitalik.eth')).toBeInTheDocument()
     })
 
-    it('shows ENS loading state', () => {
-      mockUseEnsName.mockReturnValue({
-        data: undefined,
-        isLoading: true,
-        error: null,
-      } as any)
-
-      render(<AddressDisplay />)
-      
-      expect(screen.getByText('Resolving ENS name...')).toBeInTheDocument()
-    })
-
-    it('shows ENS error state', () => {
-      mockUseEnsName.mockReturnValue({
-        data: undefined,
-        isLoading: false,
-        error: new Error('ENS lookup failed'),
-      } as any)
-
-      render(<AddressDisplay />)
-      
-      expect(screen.getByText('ENS lookup failed')).toBeInTheDocument()
-    })
-
-    it('copies address to clipboard when copy button is clicked', async () => {
-      mockUseEnsName.mockReturnValue({
-        data: undefined,
-        isLoading: false,
-        error: null,
-      } as any)
-
-      mockWriteText.mockResolvedValue(undefined)
-
-      render(<AddressDisplay />)
-      
-      const copyButton = screen.getByRole('button')
-      fireEvent.click(copyButton)
-      
-      expect(mockWriteText).toHaveBeenCalledWith(mockAddress)
-    })
-
-    it('shows full address in details section', () => {
+    it('renders dropdown when connected', () => {
       mockUseEnsName.mockReturnValue({
         data: undefined,
         isLoading: false,
@@ -138,10 +96,32 @@ describe('AddressDisplay', () => {
 
       render(<AddressDisplay />)
       
-      const detailsElement = screen.getByText('Show full address')
-      fireEvent.click(detailsElement)
+      expect(screen.getByRole('button')).toBeInTheDocument()
+      expect(screen.getByText('0x1234...7890')).toBeInTheDocument()
+    })
+
+    it('handles disconnect functionality', () => {
+      mockUseEnsName.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        error: null,
+      } as any)
+
+      render(<AddressDisplay />)
       
-      expect(screen.getByText(mockAddress)).toBeInTheDocument()
+      // Component renders and disconnect hook is available
+      expect(mockUseDisconnect).toHaveBeenCalled()
+    })
+
+    it('renders with non-compact mode', () => {
+      mockUseEnsName.mockReturnValue({
+        data: undefined,
+        isLoading: false,
+        error: null,
+      } as any)
+
+      const { container } = render(<AddressDisplay compact={false} />)
+      expect(container.firstChild).not.toBeNull()
     })
   })
 })

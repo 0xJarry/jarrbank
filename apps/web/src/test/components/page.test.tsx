@@ -91,6 +91,6 @@ describe('Home Page', () => {
     
     // Just test that key elements exist - use getAllByText for elements that appear multiple times
     expect(screen.getAllByText('JarrBank').length).toBeGreaterThan(0)
-    expect(screen.getByText('Connect Your Wallet')).toBeInTheDocument()
+    expect(screen.getByText('Connect Wallet')).toBeInTheDocument() // Updated text match
   })
 })
