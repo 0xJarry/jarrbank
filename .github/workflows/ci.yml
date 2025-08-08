@@ -36,6 +36,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build dependencies
+        run: npm run build:deps
+
       - name: Lint
         run: npm run lint
 
@@ -58,6 +61,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Build dependencies
+        run: npm run build:deps
 
       - name: Run tests
         run: npm run test
