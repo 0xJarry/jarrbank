@@ -51,7 +51,7 @@ export class PortfolioAggregator extends EventEmitter {
 
       const nativePrices = await this.priceService.getNativeTokenPrices();
       
-      // Debug logging for native prices
+      // Debug logging for native prices 
       console.log('Native prices fetched:', Object.fromEntries(nativePrices));
 
       const allTokens: { address: string; chainId: ChainId }[] = [];
