@@ -6,8 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { PieChart, TrendingUp, Wallet, DollarSign, RefreshCw, AlertCircle } from 'lucide-react'
 import { trpc } from '@/lib/trpc'
-import { CHAIN_IDS } from '@jarrbank/shared/src/constants/chains'
-import { formatUSDValue } from '@jarrbank/shared/src/utils/format'
+import { CHAIN_IDS, formatUSDValue } from '@jarrbank/shared'
 import { useState } from 'react'
 
 export function PortfolioOverview() {
