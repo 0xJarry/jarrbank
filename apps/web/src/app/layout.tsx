@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import { Web3Provider } from '@/components/web3/Web3Provider'
+import { TRPCProvider } from '@/providers/trpc-provider'
 import './globals.css'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -18,9 +19,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Web3Provider>
-          {children}
-        </Web3Provider>
+        <TRPCProvider>
+          <Web3Provider>
+            {children}
+          </Web3Provider>
+        </TRPCProvider>
       </body>
     </html>
   )

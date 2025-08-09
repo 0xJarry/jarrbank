@@ -321,3 +321,16 @@ export class RedisCache {
     };
   }
 }
+
+// Global Redis client instance
+let globalRedisClient: Redis | null = null;
+
+export function getRedisClient(): Redis {
+  if (!globalRedisClient) {
+    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+    globalRedisClient = new Redis(redisUrl, {
+      retryStrategy: (times) => Math.min(times * 50, 2000)
+    });
+  }
+  return globalRedisClient;
+}

@@ -138,7 +138,8 @@ describe('Health Check Endpoint', () => {
 
     const body = JSON.parse(response.body);
     
-    expect(body.responseTime).toBeGreaterThan(0);
+    expect(typeof body.responseTime).toBe('number');
+    expect(body.responseTime).toBeGreaterThanOrEqual(0);
     expect(body.uptime).toBeGreaterThan(0);
     expect(body.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
   });

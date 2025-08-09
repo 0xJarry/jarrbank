@@ -1,11 +1,14 @@
 import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
+import { fastifyTRPCPlugin } from '@trpc/server/adapters/fastify';
 import { RpcProviderManager, RpcConfig } from '../../../packages/web3/src/rpc/providers';
 import { RedisCache, CacheConfig } from './db/redis';
 import { EnhancedRpcBatchManager } from './services/EnhancedRpcBatchManager';
 import { ChainSpecificErrorHandler, ErrorMetricsCollector } from './services/RpcErrorHandler';
 import { setupRateLimit } from './middleware/rateLimit';
 import { CHAIN_IDS, ChainId } from '../../../packages/shared/src/constants/chains';
+import { appRouter } from './routers';
+import { initializePortfolioServices } from './routers/portfolio.router';
 import 'dotenv/config';
 
 // Configuration from environment variables
@@ -90,6 +93,12 @@ async function createServer(): Promise<FastifyInstance> {
 
   await setupRateLimit(fastify, redisCache);
 
+  // Register tRPC
+  await fastify.register(fastifyTRPCPlugin, {
+    prefix: '/trpc',
+    trpcOptions: { router: appRouter }
+  });
+
   // Register routes
   await registerRoutes(fastify);
 
@@ -126,6 +135,9 @@ async function initializeServices(): Promise<void> {
       batchDelayMs: 50
     }
   );
+
+  // Initialize portfolio services
+  initializePortfolioServices(providerManager);
 
   console.log('✅ Services initialized successfully');
 }

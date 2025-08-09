@@ -2,13 +2,55 @@
 
 import { useAccount, useChainId } from 'wagmi'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { generateMockPortfolio } from '@/lib/mockData'
-import { formatEther } from 'viem'
-import { PieChart, TrendingUp, Wallet, DollarSign } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
+import { PieChart, TrendingUp, Wallet, DollarSign, RefreshCw, AlertCircle } from 'lucide-react'
+import { trpc } from '@/lib/trpc'
+import { CHAIN_IDS } from '@jarrbank/shared/src/constants/chains'
+import { formatUSDValue } from '@jarrbank/shared/src/utils/format'
+import { useState } from 'react'
 
 export function PortfolioOverview() {
   const { address, isConnected } = useAccount()
   const chainId = useChainId()
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  const supportedChainIds = [
+    CHAIN_IDS.ETHEREUM,
+    CHAIN_IDS.ARBITRUM,
+    CHAIN_IDS.AVALANCHE
+  ]
+
+  const { data, isLoading, error, refetch } = trpc.portfolio.getPortfolioSummary.useQuery(
+    {
+      walletAddress: address!,
+      chainIds: supportedChainIds
+    },
+    {
+      enabled: !!address && isConnected,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchInterval: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+    }
+  )
+
+  const refreshMutation = trpc.portfolio.refreshPortfolio.useMutation({
+    onMutate: () => setIsRefreshing(true),
+    onSettled: () => {
+      setIsRefreshing(false)
+      refetch()
+    }
+  })
+
+  const handleRefresh = () => {
+    if (!address) return
+    refreshMutation.mutate({
+      walletAddress: address,
+      chainId: chainId as any,
+      forceRefresh: true
+    })
+  }
 
   if (!isConnected || !address) {
     return (
@@ -26,14 +68,94 @@ export function PortfolioOverview() {
     )
   }
 
-  const portfolio = generateMockPortfolio(address, chainId)
-  const totalValueFormatted = parseFloat(formatEther(portfolio.totalValue)).toLocaleString(
-    'en-US',
-    { style: 'currency', currency: 'USD' }
-  )
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-8 w-24" />
+              </CardHeader>
+            </Card>
+          ))}
+        </div>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-32" />
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-destructive" />
+            <CardTitle>Error Loading Portfolio</CardTitle>
+          </div>
+          <CardDescription>
+            {error.message || 'Failed to load portfolio data'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button onClick={() => refetch()} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Try Again
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!data || BigInt(data.totalValueUSD) === 0n) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Wallet className="h-5 w-5" />
+            <CardTitle>Portfolio Overview</CardTitle>
+          </div>
+          <CardDescription>
+            No tokens found in your wallet
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            Your wallet does not have any tokens on the supported chains (Ethereum, Arbitrum, Avalanche).
+            Transfer some tokens to see your portfolio.
+          </p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const totalValueFormatted = formatUSDValue(BigInt(data.totalValueUSD))
+  const healthScore = calculateHealthScore(data.assetComposition)
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <Button 
+          onClick={handleRefresh} 
+          variant="outline" 
+          size="sm"
+          disabled={isRefreshing}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+      </div>
+
       {/* Portfolio Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
@@ -43,9 +165,8 @@ export function PortfolioOverview() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalValueFormatted}</div>
-            <p className="text-xs text-green-600 flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" />
-              +2.5% from last week
+            <p className="text-xs text-muted-foreground">
+              Across {data.chainBreakdown.length} chains
             </p>
           </CardContent>
         </Card>
@@ -56,10 +177,10 @@ export function PortfolioOverview() {
             <PieChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{portfolio.healthScore}/100</div>
+            <div className="text-2xl font-bold">{healthScore}/100</div>
             <p className="text-xs text-muted-foreground">
-              {portfolio.healthScore >= 80 ? 'Excellent' : 
-               portfolio.healthScore >= 60 ? 'Good' : 'Needs Attention'}
+              {healthScore >= 80 ? 'Excellent' : 
+               healthScore >= 60 ? 'Good' : 'Needs Attention'}
             </p>
           </CardContent>
         </Card>
@@ -71,26 +192,59 @@ export function PortfolioOverview() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {portfolio.composition.tokens.length + portfolio.composition.lpPositions.length}
+              {data.topTokens.length}
             </div>
             <p className="text-xs text-muted-foreground">
-              {portfolio.composition.tokens.length} tokens, {portfolio.composition.lpPositions.length} LP positions
+              {data.topTokens.length} tokens across chains
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Token Holdings */}
+      {/* Chain Breakdown */}
       <Card>
         <CardHeader>
-          <CardTitle>Token Holdings</CardTitle>
-          <CardDescription>Your current token balances and values</CardDescription>
+          <CardTitle>Chain Distribution</CardTitle>
+          <CardDescription>Portfolio value by blockchain</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {portfolio.composition.tokens.map((token, index) => {
-              const balance = parseFloat(formatEther(token.balance))
-              const value = parseFloat(formatEther(token.valueUSD))
+            {data.chainBreakdown.map((chain) => {
+              const chainName = getChainName(chain.chainId)
+              const value = formatUSDValue(BigInt(chain.valueUSD))
+              
+              return (
+                <div key={chain.chainId} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                      {chainName.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="font-medium">{chainName}</p>
+                      <p className="text-sm text-muted-foreground">{chain.percentage.toFixed(1)}%</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium">{value}</p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Top Tokens */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Top Holdings</CardTitle>
+          <CardDescription>Your largest token positions</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {data.topTokens.slice(0, 10).map((token, index) => {
+              const balance = formatTokenAmount(BigInt(token.balance), token.metadata.decimals)
+              const value = formatUSDValue(BigInt(token.valueUSD))
               
               return (
                 <div key={`${token.tokenAddress}-${index}`} className="flex items-center justify-between p-3 border rounded-lg">
@@ -104,10 +258,8 @@ export function PortfolioOverview() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-medium">{balance.toFixed(4)} {token.metadata.symbol}</p>
-                    <p className="text-sm text-muted-foreground">
-                      ${value.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                    </p>
+                    <p className="font-medium">{balance} {token.metadata.symbol}</p>
+                    <p className="text-sm text-muted-foreground">{value}</p>
                   </div>
                 </div>
               )
@@ -115,47 +267,58 @@ export function PortfolioOverview() {
           </div>
         </CardContent>
       </Card>
-
-      {/* LP Positions */}
-      {portfolio.composition.lpPositions.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Liquidity Pool Positions</CardTitle>
-            <CardDescription>Your active LP positions across DeFi protocols</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {portfolio.composition.lpPositions.map((position, index) => {
-                const value = parseFloat(formatEther(position.totalValueUSD))
-                
-                return (
-                  <div key={`${position.poolAddress}-${index}`} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                        LP
-                      </div>
-                      <div>
-                        <p className="font-medium">{position.poolName}</p>
-                        <p className="text-sm text-muted-foreground capitalize">{position.protocolId}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium">
-                        ${value.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                      </p>
-                      {position.apr && (
-                        <p className="text-sm text-green-600">
-                          {position.apr.toFixed(1)}% APR
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   )
+}
+
+function calculateHealthScore(composition: any[]): number {
+  let score = 100
+  
+  const stablecoinPercentage = composition
+    .find(c => c.category === 'STABLECOIN')?.percentage || 0
+  const memePercentage = composition
+    .find(c => c.category === 'MEME')?.percentage || 0
+
+  if (stablecoinPercentage > 80) score -= 20
+  else if (stablecoinPercentage < 10) score -= 10
+  
+  if (memePercentage > 30) score -= 30
+  else if (memePercentage > 20) score -= 15
+  
+  const categoryCount = composition.filter(c => c.percentage > 5).length
+  if (categoryCount < 2) score -= 15
+  else if (categoryCount > 4) score += 10
+  
+  return Math.max(0, Math.min(100, score))
+}
+
+function getChainName(chainId: number): string {
+  const names: Record<number, string> = {
+    [CHAIN_IDS.ETHEREUM]: 'Ethereum',
+    [CHAIN_IDS.ARBITRUM]: 'Arbitrum',
+    [CHAIN_IDS.AVALANCHE]: 'Avalanche'
+  }
+  return names[chainId] || 'Unknown'
+}
+
+function formatTokenAmount(amount: bigint, decimals: number): string {
+  if (amount === 0n) return '0'
+  
+  const divisor = 10n ** BigInt(decimals)
+  const quotient = amount / divisor
+  const remainder = amount % divisor
+  
+  if (remainder === 0n) {
+    return quotient.toString()
+  }
+  
+  const remainderStr = remainder.toString().padStart(decimals, '0')
+  const significantDecimals = Math.min(4, decimals)
+  const trimmedRemainder = remainderStr.substring(0, significantDecimals).replace(/0+$/, '')
+  
+  if (trimmedRemainder.length === 0) {
+    return quotient.toString()
+  }
+  
+  return `${quotient}.${trimmedRemainder}`
 }

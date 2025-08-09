@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { Web3Provider } from '@/components/web3/Web3Provider'
+import { TRPCProvider } from '@/providers/trpc-provider'
 import Home from '../../app/page'
 import * as wagmi from 'wagmi'
 
@@ -19,11 +20,7 @@ vi.mock('wagmi', async (importOriginal) => {
   }
 })
 
-// Mock TanStack React Query
-vi.mock('@tanstack/react-query', () => ({
-  QueryClient: vi.fn().mockImplementation(() => ({})),
-  QueryClientProvider: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}))
+// Provide real TRPCProvider from app code; no need to mock QueryClientProvider here
 
 // Mock the mock data generator
 vi.mock('@/lib/mockData', () => ({
@@ -50,9 +47,11 @@ const mockUseEnsName = vi.mocked(wagmi.useEnsName)
 
 const renderWithProviders = (component: React.ReactElement) => {
   return render(
-    <Web3Provider>
-      {component}
-    </Web3Provider>
+    <TRPCProvider>
+      <Web3Provider>
+        {component}
+      </Web3Provider>
+    </TRPCProvider>
   )
 }
 
