@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "cd ../.. && npm run build:deps && cd apps/web && next build",
+  "buildCommand": "npm run build:deps && npm run build",
   "installCommand": "npm install",
   "framework": "nextjs",
   "functions": {
