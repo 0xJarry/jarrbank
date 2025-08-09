@@ -3,6 +3,9 @@
   "buildCommand": "npm run build:deps && npm run build",
   "installCommand": "npm install",
   "framework": "nextjs",
+  "github": {
+    "enabled": false
+  },
   "functions": {
     "apps/web/src/app/api/*/route.ts": {
       "runtime": "nodejs20.x"
