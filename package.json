@@ -17,7 +17,7 @@
     "dev:web": "turbo run dev --filter=web",
     "dev:api": "turbo run dev --filter=@jarrbank/api",
     "build": "turbo run build",
-    "build:deps": "turbo run build --filter=@jarrbank/shared --filter=@jarrbank/web3 --filter=@jarrbank/api",
+    "build:deps": "turbo run build --filter=@jarrbank/shared --filter=@jarrbank/web3",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
