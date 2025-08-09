@@ -40,6 +40,14 @@ cd apps/web && npm run build
 - **Solution**: Ensure the export is added to the package's index file
 - **Check**: `packages/[package]/src/index.ts` or relevant barrel export
 
+### API Type Import Errors
+- **Problem**: `Module '@jarrbank/api' has no exported member 'AppRouter'`
+- **Solution**: 
+  1. Ensure `apps/api/src/index.ts` exists and exports `AppRouter` type
+  2. API package must have proper `main` and `types` fields in package.json
+  3. Import from package root: `import type { AppRouter } from '@jarrbank/api'`
+- **Why**: API package needs proper export structure for tRPC types
+
 ### Vercel Deployment Failures
 - **Always build locally first**: The CI/deployment uses the same commands
 - **Check imports**: Ensure all imports resolve correctly
