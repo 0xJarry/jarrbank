@@ -269,13 +269,13 @@ describe('PriceService', () => {
         .mockResolvedValueOnce({
           ok: true,
           json: () => Promise.resolve({
-            eth: { usd: 2000 }
+            ethereum: { usd: 2000 }
           })
         } as Response)
         .mockResolvedValueOnce({
           ok: true,
           json: () => Promise.resolve({
-            avax: { usd: 25 }
+            "avalanche-2": { usd: 25 }
           })
         } as Response);
 
