@@ -27,7 +27,7 @@ vi.mock('ioredis', () => ({
 // Mock fetch
 global.fetch = vi.fn();
 
-describe('Health Check Endpoint', () => {
+describe('Health Check Endpoints', () => {
   let server: FastifyInstance;
 
   beforeAll(async () => {
@@ -41,6 +41,25 @@ describe('Health Check Endpoint', () => {
 
   afterAll(async () => {
     await server.close();
+  });
+
+  it('should have a fast /health endpoint for deployment health checks', async () => {
+    const response = await server.inject({
+      method: 'GET',
+      url: '/health'
+    });
+
+    expect(response.statusCode).toBe(200);
+    
+    const body = JSON.parse(response.body);
+    expect(body.status).toBe('healthy');
+    expect(body.version).toBeDefined();
+    expect(body.uptime).toBeGreaterThan(0);
+    expect(body.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+    
+    // Should not include complex service checks
+    expect(body.services).toBeUndefined();
+    expect(body.metrics).toBeUndefined();
   });
 
   it('should return healthy status when all services are operational', async () => {
@@ -67,7 +86,7 @@ describe('Health Check Endpoint', () => {
 
     const response = await server.inject({
       method: 'GET',
-      url: '/health'
+      url: '/health/detailed'
     });
 
     expect(response.statusCode).toBe(200);
@@ -108,7 +127,7 @@ describe('Health Check Endpoint', () => {
 
     const response = await server.inject({
       method: 'GET',
-      url: '/health'
+      url: '/health/detailed'
     });
 
     expect(response.statusCode).toBe(503);
@@ -133,7 +152,7 @@ describe('Health Check Endpoint', () => {
 
     const response = await server.inject({
       method: 'GET',
-      url: '/health'
+      url: '/health/detailed'
     });
 
     const body = JSON.parse(response.body);
@@ -153,7 +172,7 @@ describe('Health Check Endpoint', () => {
 
     const response = await server.inject({
       method: 'GET',
-      url: '/health'
+      url: '/health/detailed'
     });
 
     const body = JSON.parse(response.body);
@@ -179,7 +198,7 @@ describe('Health Check Endpoint', () => {
 
     const response = await server.inject({
       method: 'GET',
-      url: '/health'
+      url: '/health/detailed'
     });
 
     // Should return 200 since our mock Redis is working
@@ -196,7 +215,7 @@ describe('Health Check Endpoint', () => {
 
     const response = await server.inject({
       method: 'GET',
-      url: '/health'
+      url: '/health/detailed'
     });
 
     expect(response.statusCode).toBe(503);
@@ -229,7 +248,7 @@ describe('Health Check Endpoint', () => {
 
     const response = await server.inject({
       method: 'GET',
-      url: '/health'
+      url: '/health/detailed'
     });
 
     const body = JSON.parse(response.body);

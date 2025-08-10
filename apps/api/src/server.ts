@@ -164,8 +164,20 @@ async function initializeServices(): Promise<void> {
 }
 
 async function registerRoutes(fastify: FastifyInstance): Promise<void> {
-  // Comprehensive health check endpoint
+  // Lightweight health check endpoint for Railway deployment
   fastify.get('/health', async (request, reply) => {
+    const health = {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      version: '1.0.0'
+    };
+    
+    reply.code(200).send(health);
+  });
+
+  // Comprehensive health check endpoint for monitoring
+  fastify.get('/health/detailed', async (request, reply) => {
     const startTime = Date.now();
     
     try {
