@@ -42,7 +42,6 @@ jobs:
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
           RAILWAY_SERVICE: ${{ secrets.RAILWAY_SERVICE_NAME }}
-        working-directory: ./apps/api
         run: |
           railway up -d --service "$RAILWAY_SERVICE"
 
