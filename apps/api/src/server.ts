@@ -87,8 +87,29 @@ async function createServer(): Promise<FastifyInstance> {
 
   // Register plugins
   await fastify.register(cors, {
-    origin: process.env.NODE_ENV === 'development' ? true : false,
-    methods: ['GET', 'POST', 'PUT', 'DELETE']
+    origin: (origin, callback) => {
+      const allowedOrigins = [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'https://jarrbank.vercel.app',
+        process.env.FRONTEND_URL
+      ].filter(Boolean);
+      
+      // Allow requests with no origin (e.g., Postman, server-to-server)
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      
+      // Check if origin is allowed
+      if (process.env.NODE_ENV === 'development' || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'), false);
+      }
+    },
+    credentials: process.env.CORS_CREDENTIALS === 'true',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
   });
 
   await setupRateLimit(fastify, redisCache);

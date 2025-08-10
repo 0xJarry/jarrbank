@@ -1,0 +1,113 @@
+name: Deploy API to Railway
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'apps/api/**'
+      - 'packages/**'
+      - '.github/workflows/deploy-api.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy-api:
+    name: Deploy API to Railway
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build dependencies
+        run: npm run build:deps
+
+      - name: Build API
+        run: npm run build --scope=@jarrbank/api
+
+      - name: Deploy to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          railway up --service api --dockerfile apps/api/Dockerfile
+
+      - name: Get Railway deployment URL
+        id: railway-url
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          # Get the deployment URL from Railway
+          DEPLOYMENT_URL=$(railway status --json | jq -r '.url')
+          echo "API_URL=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+          echo "✅ API deployed to: $DEPLOYMENT_URL"
+
+      - name: Update Vercel environment variable
+        if: success()
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          # Update the NEXT_PUBLIC_API_URL environment variable in Vercel
+          API_URL="${{ steps.railway-url.outputs.API_URL }}"
+          if [ ! -z "$API_URL" ]; then
+            curl -X PATCH \
+              -H "Authorization: Bearer $VERCEL_TOKEN" \
+              -H "Content-Type: application/json" \
+              -d '{"key":"NEXT_PUBLIC_API_URL","value":"'$API_URL'","target":["production"]}' \
+              "https://api.vercel.com/v10/projects/$VERCEL_PROJECT_ID/env"
+            echo "✅ Updated Vercel environment variable with Railway API URL"
+          fi
+
+  health-check:
+    name: API Health Check
+    runs-on: ubuntu-latest
+    needs: deploy-api
+    
+    steps:
+      - name: Wait for API deployment
+        run: sleep 45
+
+      - name: Get Railway deployment URL
+        id: get-url
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          npm install -g @railway/cli
+          DEPLOYMENT_URL=$(railway status --json | jq -r '.url')
+          echo "API_URL=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+
+      - name: Health check
+        run: |
+          API_URL="${{ steps.get-url.outputs.API_URL }}"
+          if [ ! -z "$API_URL" ]; then
+            curl -f "$API_URL/health" || exit 1
+            echo "✅ API health check passed"
+            echo "🚀 API successfully deployed to: $API_URL"
+          else
+            echo "❌ Could not determine Railway API URL"
+            exit 1
+          fi
+
+      - name: Test tRPC endpoint
+        run: |
+          API_URL="${{ steps.get-url.outputs.API_URL }}"
+          if [ ! -z "$API_URL" ]; then
+            # Test tRPC health endpoint
+            curl -X POST \
+              -H "Content-Type: application/json" \
+              -d '{"0":{"json":null}}' \
+              "$API_URL/trpc/health" || echo "⚠️ tRPC endpoint test failed (may need auth)"
+          fi
