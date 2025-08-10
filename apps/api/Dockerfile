@@ -29,11 +29,11 @@ COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
 # Copy source code
 COPY . .
 
-# Build dependencies first (shared and web3 packages)
-RUN npm run build:deps
+# Build only the packages that API depends on
+RUN npx turbo run build --filter=@jarrbank/shared --filter=@jarrbank/web3
 
 # Build API
-RUN npm run build --scope=@jarrbank/api
+RUN npx turbo run build --filter=@jarrbank/api
 
 # Production stage
 FROM node:20-alpine AS runner
