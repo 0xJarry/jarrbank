@@ -43,7 +43,7 @@ jobs:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         working-directory: ./apps/api
         run: |
-          railway up -d
+          railway up -d --service api
 
       - name: Get Railway deployment URL
         id: railway-url
