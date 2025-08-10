@@ -53,9 +53,9 @@ CORS_CREDENTIALS=true
 
 1. **Initial Setup:**
    - Connect GitHub repo to Railway
-   - Set root directory to `/`
-   - Set build command: `npm run build:deps && npm run build --scope=@jarrbank/api`
-   - Set start command: `node apps/api/dist/server.js`
+   - [x] Set root directory to `/`
+   - [x] Set build command: `npm run build:deps && npm run build --scope=@jarrbank/api`
+   - [x] Set start command: `node apps/api/dist/server.js`
    - Enable Docker builds with path: `apps/api/Dockerfile`
 
 2. **Configure Environment:**
