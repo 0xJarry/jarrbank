@@ -164,26 +164,59 @@ async function initializeServices(): Promise<void> {
 }
 
 async function registerRoutes(fastify: FastifyInstance): Promise<void> {
-  // Simple health check endpoint for Railway deployment
+  // Comprehensive health check endpoint
   fastify.get('/health', async (request, reply) => {
     const startTime = Date.now();
     
     try {
+      // Test Redis connection
+      const redisHealth = await testRedisConnection();
+      
+      // Test RPC connections for all supported chains
+      const rpcHealth = await testAllRpcConnections();
+      
+      // Get queue and error metrics
+      const queueStats = rpcManager.getQueueStats();
+      const errorStats = errorMetrics.getMetrics();
+      
+      // Determine overall status
+      const isRedisHealthy = redisHealth.status === 'healthy';
+      const isRpcHealthy = rpcHealth.status === 'healthy';
+      const overallHealthy = isRedisHealthy && isRpcHealthy;
+      
       const health = {
-        status: 'healthy',
+        status: overallHealthy ? 'healthy' : 'degraded',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
         responseTime: Date.now() - startTime,
-        version: '1.0.0'
+        version: '1.0.0',
+        services: {
+          redis: redisHealth,
+          rpc: rpcHealth
+        },
+        metrics: {
+          queue: {
+            totalQueued: queueStats.totalQueued,
+            totalActive: queueStats.totalActive
+          },
+          errors: {
+            totalErrors: errorStats.totalErrors
+          }
+        }
       };
       
-      reply.code(200).send(health);
+      const statusCode = overallHealthy ? 200 : 503;
+      reply.code(statusCode).send(health);
     } catch (error) {
       const errorResponse = {
         status: 'unhealthy',
         timestamp: new Date().toISOString(),
         error: error instanceof Error ? error.message : 'Unknown error',
-        responseTime: Date.now() - startTime
+        responseTime: Date.now() - startTime,
+        services: {
+          redis: { status: 'unhealthy', error: 'Service check failed' },
+          rpc: { status: 'unhealthy', error: 'Service check failed' }
+        }
       };
       
       reply.code(503).send(errorResponse);
@@ -247,6 +280,69 @@ async function registerRoutes(fastify: FastifyInstance): Promise<void> {
     const metrics = errorMetrics.getMetrics();
     reply.send(metrics);
   });
+}
+
+async function testRedisConnection(): Promise<{
+  status: string;
+  responseTime?: number;
+  error?: string;
+}> {
+  const startTime = Date.now();
+  
+  try {
+    const isHealthy = await redisCache.ping();
+    return {
+      status: isHealthy ? 'healthy' : 'unhealthy',
+      responseTime: Date.now() - startTime,
+      ...(isHealthy ? {} : { error: 'Redis ping failed' })
+    };
+  } catch (error) {
+    return {
+      status: 'unhealthy',
+      responseTime: Date.now() - startTime,
+      error: error instanceof Error ? error.message : 'Redis connection failed'
+    };
+  }
+}
+
+async function testAllRpcConnections(): Promise<{
+  status: string;
+  chains: Record<number, {
+    healthy: boolean;
+    responseTime: number;
+    provider: string;
+    blockNumber?: string;
+    error?: string;
+  }>;
+}> {
+  const supportedChains = [CHAIN_IDS.ETHEREUM, CHAIN_IDS.ARBITRUM, CHAIN_IDS.AVALANCHE];
+  const chains: Record<number, any> = {};
+  
+  // Test all chains in parallel
+  const chainTests = await Promise.allSettled(
+    supportedChains.map(chainId => testRpcConnection(chainId))
+  );
+  
+  let healthyCount = 0;
+  
+  chainTests.forEach((result, index) => {
+    const chainId = supportedChains[index];
+    if (result.status === 'fulfilled') {
+      chains[chainId] = result.value;
+      if (result.value.healthy) healthyCount++;
+    } else {
+      chains[chainId] = {
+        healthy: false,
+        responseTime: 0,
+        provider: 'primary',
+        error: 'Test failed'
+      };
+    }
+  });
+  
+  const status = healthyCount === supportedChains.length ? 'healthy' : 'degraded';
+  
+  return { status, chains };
 }
 
 async function testRpcConnection(chainId: number): Promise<{
